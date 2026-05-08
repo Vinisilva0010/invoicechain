@@ -1,0 +1,244 @@
+{
+  "address": "4wy52jbYZop2pWWBtBmVZKUMFMrj86qrork9StcypSu7",
+  "metadata": {
+    "name": "invoicechain",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "Created with Anchor"
+  },
+  "instructions": [
+    {
+      "name": "create_invoice",
+      "discriminator": [
+        154,
+        170,
+        31,
+        135,
+        134,
+        100,
+        156,
+        146
+      ],
+      "accounts": [
+        {
+          "name": "invoice",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  105,
+                  110,
+                  118,
+                  111,
+                  105,
+                  99,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "freelancer"
+              },
+              {
+                "kind": "arg",
+                "path": "invoice_id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "freelancer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "invoice_id",
+          "type": "u64"
+        },
+        {
+          "name": "amount_usd_cents",
+          "type": "u64"
+        },
+        {
+          "name": "description",
+          "type": "string"
+        },
+        {
+          "name": "expires_at",
+          "type": "i64"
+        }
+      ]
+    },
+    {
+      "name": "expire_invoice",
+      "discriminator": [
+        239,
+        203,
+        58,
+        150,
+        67,
+        51,
+        55,
+        84
+      ],
+      "accounts": [
+        {
+          "name": "invoice",
+          "writable": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "mark_paid",
+      "discriminator": [
+        51,
+        120,
+        9,
+        160,
+        70,
+        29,
+        18,
+        205
+      ],
+      "accounts": [
+        {
+          "name": "invoice",
+          "writable": true
+        },
+        {
+          "name": "freelancer",
+          "signer": true,
+          "relations": [
+            "invoice"
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "kirapay_session_id",
+          "type": "string"
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "Invoice",
+      "discriminator": [
+        51,
+        194,
+        250,
+        114,
+        6,
+        104,
+        18,
+        164
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "AlreadyProcessed",
+      "msg": "Invoice already paid or expired"
+    },
+    {
+      "code": 6001,
+      "name": "NotExpiredYet",
+      "msg": "Invoice has not expired yet"
+    },
+    {
+      "code": 6002,
+      "name": "DescriptionTooLong",
+      "msg": "Description too long (max 200 chars)"
+    },
+    {
+      "code": 6003,
+      "name": "InvalidAmount",
+      "msg": "Amount must be greater than zero"
+    },
+    {
+      "code": 6004,
+      "name": "InvalidExpiration",
+      "msg": "Expiration must be in the future"
+    }
+  ],
+  "types": [
+    {
+      "name": "Invoice",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "freelancer",
+            "type": "pubkey"
+          },
+          {
+            "name": "invoice_id",
+            "type": "u64"
+          },
+          {
+            "name": "amount_usd_cents",
+            "type": "u64"
+          },
+          {
+            "name": "description",
+            "type": "string"
+          },
+          {
+            "name": "status",
+            "type": {
+              "defined": {
+                "name": "InvoiceStatus"
+              }
+            }
+          },
+          {
+            "name": "created_at",
+            "type": "i64"
+          },
+          {
+            "name": "expires_at",
+            "type": "i64"
+          },
+          {
+            "name": "paid_at",
+            "type": {
+              "option": "i64"
+            }
+          },
+          {
+            "name": "kirapay_session_id",
+            "type": "string"
+          }
+        ]
+      }
+    },
+    {
+      "name": "InvoiceStatus",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Pending"
+          },
+          {
+            "name": "Paid"
+          },
+          {
+            "name": "Expired"
+          }
+        ]
+      }
+    }
+  ]
+}
