@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { PublicKey } from "@solana/web3.js";
+import { getProgram, getInvoicePDA } from "@/lib/anchor";
 
 export async function POST(req: NextRequest) {
   let body: any;
@@ -18,17 +20,47 @@ export async function POST(req: NextRequest) {
   if (event === "transaction.succeeded") {
     const invoiceId = data.customOrderId || null;
     const txHash = data.hash || null;
-    const amount = data.settlementAmount || null;
 
     console.log(`[webhook] payment confirmed`, {
       invoiceId,
       txHash,
-      amount,
+      amount: data.settlementAmount,
       sender: data.sender,
       recipient: data.recipient,
     });
 
-    // Fase 4: aqui vai chamar mark_paid no contrato Anchor
+    if (invoiceId) {
+      try {
+        const program = getProgram();
+        const allInvoices = await (program.account as any).invoice.all();
+        const match = allInvoices.find(
+          (inv: any) => inv.account.invoiceId.toString() === invoiceId.toString()
+        );
+
+        if (!match) {
+          console.error(`[webhook] invoice ${invoiceId} not found on-chain`);
+          return NextResponse.json({ received: true });
+        }
+
+        const freelancerPubkey = new PublicKey(match.account.freelancer);
+        const [invoicePDA] = getInvoicePDA(
+          freelancerPubkey,
+          BigInt(invoiceId)
+        );
+
+        await (program.methods as any)
+          .markPaid(txHash || "kirapay_confirmed")
+          .accounts({
+            invoice: invoicePDA,
+            freelancer: freelancerPubkey,
+          })
+          .rpc();
+
+        console.log(`[webhook] invoice ${invoiceId} marked as paid on-chain`);
+      } catch (err) {
+        console.error(`[webhook] failed to mark invoice as paid:`, err);
+      }
+    }
   }
 
   if (event === "transaction.created") {
