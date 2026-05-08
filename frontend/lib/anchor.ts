@@ -1,9 +1,29 @@
 import { Connection, Keypair, PublicKey } from "@solana/web3.js";
-import { AnchorProvider, Program, Wallet } from "@coral-xyz/anchor";
+import { AnchorProvider, Program } from "@coral-xyz/anchor";
 import bs58 from "bs58";
 import idl from "./idl.json";
 
 const PROGRAM_ID = new PublicKey(process.env.NEXT_PUBLIC_PROGRAM_ID!);
+
+class NodeWallet {
+  constructor(readonly payer: Keypair) {}
+
+  async signTransaction(tx: any) {
+    tx.partialSign(this.payer);
+    return tx;
+  }
+
+  async signAllTransactions(txs: any[]) {
+    return txs.map((tx) => {
+      tx.partialSign(this.payer);
+      return tx;
+    });
+  }
+
+  get publicKey() {
+    return this.payer.publicKey;
+  }
+}
 
 export function getProgram() {
   const connection = new Connection(process.env.NEXT_PUBLIC_SOLANA_RPC!, {
@@ -12,9 +32,9 @@ export function getProgram() {
 
   const privateKey = process.env.BACKEND_WALLET_PRIVATE_KEY!;
   const keypair = Keypair.fromSecretKey(bs58.decode(privateKey));
-  const wallet = new Wallet(keypair);
+  const wallet = new NodeWallet(keypair);
 
-  const provider = new AnchorProvider(connection, wallet, {
+  const provider = new AnchorProvider(connection, wallet as any, {
     commitment: "confirmed",
   });
 

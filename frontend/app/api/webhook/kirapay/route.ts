@@ -4,8 +4,12 @@ import { getProgram, getInvoicePDA } from "@/lib/anchor";
 import { markInvoicePaid } from "@/lib/invoice-store";
 
 export async function POST(req: NextRequest) {
-  let body: any;
+  const secret = req.headers.get("x-webhook-secret");
+  if (!secret || secret !== process.env.WEBHOOK_SECRET) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
+  let body: any;
   try {
     body = await req.json();
   } catch {
@@ -31,10 +35,8 @@ export async function POST(req: NextRequest) {
     });
 
     if (invoiceId) {
-      // Atualiza store em memória
       markInvoicePaid(invoiceId, txHash || "confirmed");
 
-      // Atualiza on-chain
       try {
         const program = getProgram();
         const allInvoices = await (program.account as any).invoice.all();
@@ -48,10 +50,7 @@ export async function POST(req: NextRequest) {
         }
 
         const freelancerPubkey = new PublicKey(match.account.freelancer);
-        const [invoicePDA] = getInvoicePDA(
-          freelancerPubkey,
-          BigInt(invoiceId)
-        );
+        const [invoicePDA] = getInvoicePDA(freelancerPubkey, BigInt(invoiceId));
 
         await (program.methods as any)
           .markPaid(txHash || "kirapay_confirmed")
