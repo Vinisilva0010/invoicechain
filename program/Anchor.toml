@@ -5,14 +5,17 @@ package_manager = "yarn"
 resolution = true
 skip-lint = false
 
+[programs.devnet]
+program = "4wy52jbYZop2pWWBtBmVZKUMFMrj86qrork9StcypSu7"
+
 [programs.localnet]
 program = "4wy52jbYZop2pWWBtBmVZKUMFMrj86qrork9StcypSu7"
 
 [provider]
-cluster = "localnet"
+cluster = "devnet"
 wallet = "~/.config/solana/id.json"
 
 [scripts]
-test = "cargo test"
+test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
 
 [hooks]
