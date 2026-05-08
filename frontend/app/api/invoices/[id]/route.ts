@@ -1,18 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getInvoice } from "@/lib/invoice-store";
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = params;
+  const { id } = await params;
 
   if (!id) {
     return NextResponse.json({ error: "Missing invoice id" }, { status: 400 });
   }
 
-  // Fase 4: vai buscar do contrato Anchor on-chain
-  return NextResponse.json({
-    invoiceId: id,
-    status: "pending",
-  });
+  const invoice = getInvoice(id);
+
+  if (!invoice) {
+    return NextResponse.json({ error: "Invoice not found" }, { status: 404 });
+  }
+
+  return NextResponse.json(invoice);
 }

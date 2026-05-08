@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PublicKey } from "@solana/web3.js";
 import { getProgram, getInvoicePDA } from "@/lib/anchor";
+import { markInvoicePaid } from "@/lib/invoice-store";
 
 export async function POST(req: NextRequest) {
   let body: any;
@@ -30,6 +31,10 @@ export async function POST(req: NextRequest) {
     });
 
     if (invoiceId) {
+      // Atualiza store em memória
+      markInvoicePaid(invoiceId, txHash || "confirmed");
+
+      // Atualiza on-chain
       try {
         const program = getProgram();
         const allInvoices = await (program.account as any).invoice.all();
@@ -58,7 +63,7 @@ export async function POST(req: NextRequest) {
 
         console.log(`[webhook] invoice ${invoiceId} marked as paid on-chain`);
       } catch (err) {
-        console.error(`[webhook] failed to mark invoice as paid:`, err);
+        console.error(`[webhook] failed to mark on-chain:`, err);
       }
     }
   }

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { saveInvoice } from "@/lib/invoice-store";
 
 export async function POST(req: NextRequest) {
   const { freelancerWallet, amountUsdCents, description, expiresAt } =
@@ -25,8 +26,8 @@ export async function POST(req: NextRequest) {
       },
       body: JSON.stringify({
         tokenOut: {
-          chainId: "8453", // Base
-          address: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913", // USDC na Base
+          chainId: "8453",
+          address: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
         },
         receiver: process.env.KIRAPAY_RECEIVER,
         originalPrice: amountUsd,
@@ -57,6 +58,16 @@ export async function POST(req: NextRequest) {
       { status: 502 }
     );
   }
+
+  saveInvoice({
+    invoiceId: invoiceId.toString(),
+    checkoutUrl,
+    amountUsd,
+    description,
+    freelancerWallet,
+    expiresAt: expiresAt || Math.floor(Date.now() / 1000) + 86400 * 7,
+    status: "pending",
+  });
 
   return NextResponse.json({
     invoiceId,
