@@ -3,8 +3,6 @@ import { AnchorProvider, Program } from "@coral-xyz/anchor";
 import bs58 from "bs58";
 import idl from "./idl.json";
 
-const PROGRAM_ID = new PublicKey(process.env.NEXT_PUBLIC_PROGRAM_ID!);
-
 class NodeWallet {
   constructor(readonly payer: Keypair) {}
 
@@ -45,11 +43,12 @@ export function getInvoicePDA(
   freelancerPubkey: PublicKey,
   invoiceId: bigint
 ): [PublicKey, number] {
+  const programId = new PublicKey(process.env.NEXT_PUBLIC_PROGRAM_ID!);
   const idBuffer = Buffer.alloc(8);
   idBuffer.writeBigUInt64LE(invoiceId);
 
   return PublicKey.findProgramAddressSync(
     [Buffer.from("invoice"), freelancerPubkey.toBuffer(), idBuffer],
-    PROGRAM_ID
+    programId
   );
 }
